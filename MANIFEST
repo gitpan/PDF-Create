@@ -2,6 +2,7 @@ MANIFEST
 MANIFEST.SKIP
 Makefile.PL
 README
+CHANGES
 lib/PDF/Create.pm
 lib/PDF/Create/Outline.pm
 lib/PDF/Create/Page.pm

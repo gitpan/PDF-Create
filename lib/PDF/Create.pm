@@ -22,7 +22,7 @@ use PDF::Image::JPEGImage;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 1.0;
+$VERSION = 0.06;
 $DEBUG   = 0;
 
 sub new {
@@ -1281,6 +1281,8 @@ L<PDF::Create::Page(3)>, L<perl(1)>
 Fabien Tassin (fta@sofaraway.org)
 
 GIF and JPEG-support: Michael Gross (mdgrosse@sbox.tugraz.at)
+
+Packaging and maintenence on CPAN: Markus Baertschi (markus@markus.org)
 
 =head1 COPYRIGHT
 
