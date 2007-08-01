@@ -94,3 +94,19 @@
             make
             make test
             make pure_install
+
+  AUTHORS
+
+    Fabien Tassin
+
+    - Author of this module
+
+    Markus Baertschi (markus@markus.org)
+
+    - Maintainer 
+
+    Unfortunately he has vanished from the net, so I have taken over maintenance.
+    I've got a more recent version by Fabien which he sent by PM to me, but never
+    got around to publish it on CPAN.
+
+

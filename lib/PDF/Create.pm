@@ -1,9 +1,9 @@
 # -*- mode: Perl -*-
 
 # PDF::Create - create PDF files
-# Author: Fabien Tassin <fta@oleane.net>
-# Version: 0.01
-# Copyright 1999 Fabien Tassin <fta@oleane.net>
+# Author: Fabien Tassin <fta@sofaraway.org>
+# Version: 0.06
+# Copyright 1999-2001 Fabien Tassin <fta@sofaraway.org>
 
 # bugs:
 # - ...
@@ -17,10 +17,12 @@ use Carp;
 use FileHandle;
 use PDF::Create::Page;
 use PDF::Create::Outline;
+use PDF::Image::GIFImage;
+use PDF::Image::JPEGImage;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 0.01;
+$VERSION = 1.0;
 $DEBUG   = 0;
 
 sub new {
@@ -51,6 +53,7 @@ sub new {
   elsif (defined $params{'filename'}) {
     $self->{'filename'} = $params{'filename'};
     my $fh = new FileHandle "> $self->{'filename'}";
+    binmode $fh;
     carp "Error: can't open $self->{'filename'}: $!\n" unless defined $fh;
     $self->{'fh'} = $fh;
   }
@@ -66,6 +69,13 @@ sub new {
   $self->{'Title'} =    $params{'Title'}    if defined $params{'Title'};
   $self->{'Subject'} =  $params{'Subject'}  if defined $params{'Subject'};
   $self->{'Keywords'} = $params{'Keywords'} if defined $params{'Keywords'};
+  if (defined $params{'CreationDate'}) {
+    $self->{'CreationDate'} =
+      sprintf "D:4u%0.2u%0.2u%0.2u%0.2u%0.2u",
+	$params{'CreationDate'}->[5] + 1900, $params{'CreationDate'}->[4] + 1,
+	$params{'CreationDate'}->[3], $params{'CreationDate'}->[2],
+	$params{'CreationDate'}->[1], $params{'CreationDate'}->[0];
+  }
   return $self;
 }
 
@@ -82,6 +92,7 @@ sub close {
   $self->add_trailer;
   $self->{'fh'}->close
     if defined $self->{'fh'} && defined $self->{'filename'};
+  $self->{'data'};
 }
 
 sub debug {
@@ -297,11 +308,13 @@ sub add_info {
   my $self = shift;
 
   my %params = @_;
-  $params{'Author'}   = $self->{'Author'}   if defined $self->{'Author'};
-  $params{'Creator'}  = $self->{'Creator'}  if defined $self->{'Creator'};
-  $params{'Title'}    = $self->{'Title'}    if defined $self->{'Title'};
-  $params{'Subject'}  = $self->{'Subject'}  if defined $self->{'Subject'};
-  $params{'Keywords'} = $self->{'Keywords'} if defined $self->{'Keywords'};
+  $params{'Author'}       = $self->{'Author'}   if defined $self->{'Author'};
+  $params{'Creator'}      = $self->{'Creator'}  if defined $self->{'Creator'};
+  $params{'Title'}        = $self->{'Title'}    if defined $self->{'Title'};
+  $params{'Subject'}      = $self->{'Subject'}  if defined $self->{'Subject'};
+  $params{'Keywords'}     = $self->{'Keywords'} if defined $self->{'Keywords'};
+  $params{'CreationDate'} = $self->{'CreationDate'}
+    if defined $self->{'CreationDate'};
 
   $self->{'info'} = $self->reserve('Info');
   my $content = { 'Producer' => $self->string("PDF::Create version $VERSION"),
@@ -316,7 +329,8 @@ sub add_info {
     if defined $params{'Subject'};
   $$content{'Keywords'} = $self->string($params{'Keywords'})
     if defined $params{'Keywords'};
-
+  $$content{'CreationDate'} = $self->string($params{'CreationDate'})
+    if defined $params{'CreationDate'};
   $self->add_object(
     $self->indirect_obj(
       $self->dictionary(%$content)), 'Info');
@@ -422,6 +436,35 @@ sub new_outline {
   $outline;
 }
 
+sub get_page_size {
+  my $self = shift;
+  my $name = lc(shift);
+  
+  my %pagesizes = (
+     'a0'         => [ 0, 0, 2380, 3368 ],
+     'a1'         => [ 0, 0, 1684, 2380 ],
+     'a2'         => [ 0, 0, 1190, 1684 ],
+     'a3'         => [ 0, 0, 842,  1190 ],
+     'a4'         => [ 0, 0, 595,  842  ],
+     'a4L'        => [ 0, 0, 842,  595  ],
+     'a5'         => [ 0, 0, 421,  595  ],
+     'a6'         => [ 0, 0, 297,  421  ],
+     'letter'     => [ 0, 0, 612,  792  ],
+     'broadsheet' => [ 0, 0, 1296, 1584 ],
+     'ledger'     => [ 0, 0, 1224, 792  ],
+     'tabloid'    => [ 0, 0, 792,  1224 ],
+     'legal'      => [ 0, 0, 612,  1008 ],
+     'executive'  => [ 0, 0, 522,  756  ],
+     '36x36'      => [ 0, 0, 2592, 2592 ],
+  );
+  
+  if (!$pagesizes{$name}) {
+      $name = "a4";
+  }
+  
+  $pagesizes{$name};
+}  
+
 sub new_page {
   my $self = shift;
 
@@ -469,6 +512,21 @@ sub add_pages {
     $self->cr;
   }
 
+  for my $xobject (sort keys %{$self->{'xobjects'}}) {
+    $self->{'xobj'}{$xobject} = $self->reserve('XObject');
+    $self->add_object(
+      $self->indirect_obj(
+        $self->stream(%{$self->{'xobjects'}{$xobject}}), 'XObject'));
+    $self->cr;
+
+    if (defined $self->{'reservations'}{"ImageColorSpace$xobject"}) {
+      $self->add_object(
+        $self->indirect_obj(
+          $self->stream(%{$self->{'xobjects_colorspace'}{$xobject}}), "ImageColorSpace$xobject"));
+      $self->cr;
+    }  
+  }
+
   for my $page ($self->{'pages'}->list) {
     my $name = $page->{'name'};
     my $type = 'Page' .
@@ -495,10 +553,25 @@ sub add_pages {
 	  $$l{"F$_"} = $self->indirect_ref(@{$self->{'fontobj'}{$_}});
 	} keys %{$page->{'resources'}{'fonts'}};
 	$$resources{'Font'} = $self->dictionary(%$l);
+      } ||
+      ($k eq 'xobjects') && do {
+	my $l = {};
+	map {
+	  $$l{"Image$_"} = $self->indirect_ref(@{$self->{'xobj'}{$_}});
+	} keys %{$page->{'resources'}{'xobjects'}};
+	$$resources{'XObject'} = $self->dictionary(%$l);
       };
     }
-    $$content{'Resources'} = $self->dictionary(%$resources)
-      if scalar keys %$resources;
+    if ( defined ( $$resources{'XObject'} ) ) {
+      my $r = $self->add_object(
+				$self->indirect_obj(
+						    $self->dictionary(%$resources)));
+      $self->cr;
+      $$content{'Resources'} = [ 'ref', [ $$r[0], $$r[1] ] ];
+    } else {
+      $$content{'Resources'} = $self->dictionary(%$resources)
+	if scalar keys %$resources;
+    }
     for my $K ('MediaBox', 'CropBox', 'ArtBox', 'TrimBox', 'BleedBox') {
       my $k = lc $K;
       if (defined $page->{$k}) {
@@ -691,7 +764,7 @@ sub page_stream {
     $self->add('stream');
     $self->cr;
     $self->{'stream_pos'} = $self->position;
-    $self->{'stream_page'} = $self->{'current_page'};
+    $self->{'stream_page'} = $page; # $self->{'current_page'};
   }
 }
 
@@ -710,6 +783,82 @@ sub font {
   $num;
 }
 
+
+sub image {
+  my $self = shift;
+  my $filename = shift;
+
+  my $num = 1 + scalar keys %{$self->{'xobjects'}};
+  my $image;
+
+  my $colorspace;
+  
+  my @a;
+  my $s;
+
+  if ($filename=~/\.gif$/i) {
+      $self->{'images'}{$num} = GIFImage->new();
+  } elsif ($filename=~/\.jpg$/i || $filename=~/\.jpeg$/i) {
+      $self->{'images'}{$num} = JPEGImage->new();
+  }
+
+  $image = $self->{'images'}{$num};
+  if (!$image->Open($filename)) {
+      print $image->{error} . "\n";
+      return 0;
+  }
+  
+  $self->{'xobjects'}{$num} = {
+     'Subtype'  => $self->name('Image'),
+     'Name'     => $self->name("Image$num"),
+     'Type'     => $self->name('XObject'),
+     'Width'    => $self->number($image->{width}),
+     'Height'   => $self->number($image->{height}),
+     'BitsPerComponent'   => $self->number($image->{bpc}),
+     'Data'     => $image->ReadData(),
+     'Length'   => $self->number($image->{imagesize}),
+  };
+
+  #indexed colorspace ?
+  if ($image->{colorspacesize}) {
+      $colorspace = $self->reserve("ImageColorSpace$num");
+
+      $self->{'xobjects_colorspace'}{$num} = {
+         'Data'     => $image->{colorspacedata},
+         'Length'   => $self->number($image->{colorspacesize}),
+      };  
+
+      $self->{'xobjects'}{$num}->{'ColorSpace'} = $self->array($self->name('Indexed'), $self->name($image->{colorspace}), $self->number(255), $self->indirect_ref(@$colorspace));
+  } else {
+      $self->{'xobjects'}{$num}->{'ColorSpace'} = $self->array($self->name($image->{colorspace}));
+  }
+
+  #set Filter
+  $#a = -1;
+  foreach $s (@{$image->{filter}}) {
+      push @a, $self->name($s);
+  }    
+  if ($#a >= 0) {
+      $self->{'xobjects'}{$num}->{'Filter'} = $self->array(@a);
+  }    
+
+  #set additional DecodeParms
+  $#a = -1;
+  foreach $s (keys %{$image->{decodeparms}}) {
+      push @a, $s;
+      push @a, $self->number($image->{decodeparms}{$s});
+  }    
+  $self->{'xobjects'}{$num}->{'DecodeParms'} = $self->array($self->dictionary(@a));
+  
+  #transparent ?
+  if ($image->{transparent}) {
+      $self->{'xobjects'}{$num}->{'Mask'} = $self->array($self->number($image->{mask}), $self->number($image->{mask}));
+  }
+
+  { 'num'=>$num, 'width'=>$image->{width}, 'height'=>$image->{height} };
+}
+
+
 sub uses_font {
   my $self = shift;
   my $page = shift;
@@ -718,6 +867,20 @@ sub uses_font {
   $page->{'resources'}{'fonts'}{$font} = 1;
   $page->{'resources'}{'ProcSet'} = [ 'PDF', 'Text' ];
   $self->{'fontobj'}{$font} = 1;
+}
+
+sub uses_xobject {
+  my $self = shift;
+  my $page = shift;
+  my $xobject = shift;
+
+  $page->{'resources'}{'xobjects'}{$xobject} = 1;
+  $page->{'resources'}{'ProcSet'} = [ 'PDF', 'Text' ];
+  $self->{'xobj'}{$xobject} = 1;
+}
+
+sub get_data {
+  shift->{'data'};
 }
 
 1;
@@ -730,13 +893,17 @@ PDF::Create - create PDF files
 
     use PDF::Create;
 
-    my $pdf = new PDF::Create('filename' => 'mypdf.pdf',
-			      'Version'  => 1.2,
-			      'PageMode' => 'UseOutlines',
-			      'Author'   => 'Fabien Tassin',
-			      'Title'    => 'My title',
+    my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
+			      'Version'      => 1.2,
+			      'PageMode'     => 'UseOutlines',
+			      'Author'       => 'Fabien Tassin',
+			      'Title'        => 'My title',
+			      'CreationDate' => [ localtime ],
 			 );
     my $root = $pdf->new_page('MediaBox' => [ 0, 0, 612, 792 ]);
+	
+	# add a A4 sized page
+    my $root = $pdf->new_page('MediaBox' => $pdf->get_page_size('A4'));
 
     # Add a page which inherits its attributes from $root
     my $page = $root->new_page;
@@ -770,7 +937,7 @@ PDF::Create - create PDF files
 
     # Add something to the first page
     $page->stringc($f1, 20, 306, 300,
-                   'by Fabien Tassin <fta@oleane.net>');
+                   'by Fabien Tassin <fta@sofaraway.org>');
 
     # Add the missing PDF objects and a the footer then close the file
     $pdf->close;
@@ -835,13 +1002,18 @@ used:
 
   - Keywords: keywords associated with the document
 
+  - CreationDate: the date the document was created. This is passed
+    as an anonymous array in the same format as localtime returns.
+    (ie. a struct tm).
+
 Example:
 
-        my $pdf = new PDF::Create('filename' => 'mypdf.pdf',
-                                  'Version'  => 1.2,
-                                  'PageMode' => 'UseOutlines',
-                                  'Author'   => 'Fabien Tassin',
-                                  'Title'    => 'My title',
+        my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
+                                  'Version'      => 1.2,
+                                  'PageMode'     => 'UseOutlines',
+                                  'Author'       => 'Fabien Tassin',
+                                  'Title'        => 'My title',
+				  'CreationDate' => [ localtime ],
                              );
 
 The created object is returned.
@@ -850,6 +1022,12 @@ The created object is returned.
 
 Add the missing sections needed to obtain a complete and valid PDF
 document then close the file if needed.
+
+=item C<get_data>
+
+If you didn't ask the $pdf object to write its output to a file, you
+can pick up the pdf code by calling this method. It returns a big string.
+You need to call C<close> first, mind.
 
 =item C<add_comment [string]>
 
@@ -896,7 +1074,8 @@ page object.
 - MediaBox: Rectangle specifying the natural size of the page,
 for example the dimensions of an A4 sheet of paper. The coordinates
 are measured in default user space units. It must be the reference
-of a 4 values array.
+of a 4 values array. You can use C<get_page_size> to get the size of
+standard paper sizes.
 
 - CropBox: Rectangle specifying the default clipping region for
 the page when displayed or printed. The default is the value of
@@ -923,6 +1102,13 @@ fall outside the bleed box. The default is the value of the CropBox.
 - Rotate: Specifies the number of degrees the page should be rotated
 clockwise when it is displayed or printed. This value must be zero
 (the default) or a multiple of 90.
+
+=item C<get_page_size>
+
+Returns the size of standard paper sizes to use for MediaBox-parameter
+of C<new_page>. C<get_page_size> has one required parameter to 
+specify the paper name. Possible values are a0-a6, letter, broadsheet,
+ledger, tabloid, legal, executive and 36x36. Default is a4.
 
 =item C<font>
 
@@ -952,6 +1138,18 @@ ZapfDingbats. All of them are supported in this version except the last two
 ones.
 
 The default value is Helvetica.
+
+=item C<image filename>
+
+Prepare an XObject (image) using the given arguments. This image will be added
+to the document only if it is used at least once before the close method
+is called. In this version GIF, interlaced GIF and JPEG is supported. 
+Usage of interlaced GIFs are slower because they are decompressed, modified 
+and compressed again.
+
+Parameters: 
+
+- filename: file name of image (required).
 
 =head2 Page methods
 
@@ -1004,6 +1202,10 @@ This does not contain the size of the font yet.
 
 Draw a line between (x1, y1) and (x2, y2).
 
+=item C<set_width w>
+
+Set the width of subsequent lines to w points.
+
 =head2 Low level drawing methods
 
 =item C<moveto x y>
@@ -1050,6 +1252,24 @@ Fills the path using the non-zero winding number rule.
 
 Fills the path using the even-odd rule
 
+=item C<image image_id xpos ypos xalign yalign xscale yscale rotate xskew yskew>
+
+Inserts an image.
+
+Parameters can be:
+
+- image: Image id returned by PDF::image (required).
+
+- xpos, ypos: Position of image (required).
+
+- xalign, yalign: Alignment of image. 0 is left/bottom, 1 is centered and 2 is right, top.
+
+- xscale, yscale: Scaling of image. 1.0 is original size.
+
+- rotate: Rotation of image. 0 is no rotation, 2*pi is 360° rotation.
+
+- xskew, yskew: Skew of image.
+
 =back
 
 =head1 SEE ALSO
@@ -1058,11 +1278,13 @@ L<PDF::Create::Page(3)>, L<perl(1)>
 
 =head1 AUTHOR
 
-Fabien Tassin (fta@oleane.net)
+Fabien Tassin (fta@sofaraway.org)
+
+GIF and JPEG-support: Michael Gross (mdgrosse@sbox.tugraz.at)
 
 =head1 COPYRIGHT
 
-Copyright 1999, Fabien Tassin. All rights reserved.
+Copyright 1999-2001, Fabien Tassin. All rights reserved.
 It may be used and modified freely, but I do request that
 this copyright notice remain attached to the file. You may
 modify this module as you wish, but if you redistribute a

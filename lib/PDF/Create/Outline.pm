@@ -1,9 +1,9 @@
 # -*- mode: Perl -*-
 
 # PDF::Create::Outline - PDF outlines tree
-# Author: Fabien Tassin <fta@oleane.net>
+# Author: Fabien Tassin <fta@sofaraway.org>
 # Version: 0.01
-# Copyright 1999 Fabien Tassin <fta@oleane.net>
+# Copyright 1999 Fabien Tassin <fta@sofaraway.org>
 
 # bugs :
 # - ...

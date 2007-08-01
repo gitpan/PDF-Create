@@ -1,9 +1,9 @@
 # -*- mode: Perl -*-
 
 # PDF::Create::Page - PDF pages tree
-# Author: Fabien Tassin <fta@oleane.net>
-# Version: 0.01
-# Copyright 1999 Fabien Tassin <fta@oleane.net>
+# Author: Fabien Tassin <fta@sofaraway.org>
+# Version: 0.06
+# Copyright 1999-2001 Fabien Tassin <fta@sofaraway.org>
 
 # bugs :
 # - ...
@@ -19,7 +19,7 @@ use Data::Dumper;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 0.01;
+$VERSION = 0.06;
 $DEBUG   = 0;
 
 my $font_widths = &init_widths;
@@ -176,12 +176,66 @@ sub fill2 {
 }
 
 ########################
+
+# g: Sets the color space to DeviceGray and sets the gray tint to use
+# for filling paths. [0, 1]
+sub setgray {
+  my $self = shift;
+  my $val  = shift;
+
+  $self->{'pdf'}->page_stream($self);
+  $self->{'pdf'}->add("$val g");
+}
+
+# G: Sets the color space to DeviceGray and sets the gray tint to use
+# for stroking paths. [0, 1]
+sub setgraystroke {
+  my $self = shift;
+  my $val  = shift;
+
+  $self->{'pdf'}->page_stream($self);
+  $self->{'pdf'}->add("$val G");
+}
+
+# rg: Sets the color space to DeviceRGB and sets the color to use for
+# filling paths. [0, 1] * 3.
+sub setrgbcolor {
+  my $self = shift;
+  my $r    = shift;
+  my $g    = shift;
+  my $b    = shift;
+
+  $self->{'pdf'}->page_stream($self);
+  $self->{'pdf'}->add("$r $g $b rg");
+}
+
+# rg: Sets the color space to DeviceRGB and sets the color to use for
+# stroking paths. [0, 1] * 3.
+sub setrgbcolorstroke {
+  my $self = shift;
+  my $r    = shift;
+  my $g    = shift;
+  my $b    = shift;
+
+  $self->{'pdf'}->page_stream($self);
+  $self->{'pdf'}->add("$r $g $b RG");
+}
+
+########################
 sub line {
   my $self = shift;
   my ($x1, $y1, $x2, $y2) = @_;
 
   $self->{'pdf'}->page_stream($self);
   $self->{'pdf'}->add("$x1 $y1 m $x2 $y2 l S");
+}
+
+sub set_width {
+  my $self = shift;
+  my $w = shift;
+
+  $self->{'pdf'}->page_stream($self);
+  $self->{'pdf'}->add("$w w");
 }
 
 sub string {
@@ -194,7 +248,7 @@ sub string {
 
   $self->{'pdf'}->page_stream($self);
   $self->{'pdf'}->uses_font($self, $font);
-  # print Dumper $self->{'pdf'}{'fonts'}{$font};
+  $s =~ s|([()])|\\$1|g;
   $self->{'pdf'}->add("BT /F$font $size Tf $x $y Td ($s) Tj ET");
 }
 
@@ -208,6 +262,7 @@ sub stringl {
 
   $self->{'pdf'}->page_stream($self);
   $self->{'pdf'}->uses_font($self, $font);
+  $s =~ s|([()])|\\$1|g;
   $self->{'pdf'}->add("BT /F$font $size Tf $x $y Td ($s) Tj ET");
 }
 
@@ -222,6 +277,7 @@ sub stringr {
   $self->{'pdf'}->page_stream($self);
   $self->{'pdf'}->uses_font($self, $font);
   $x -= $size * $self->string_width($font, $s);
+  $s =~ s|([()])|\\$1|g;
   $self->{'pdf'}->add(" BT /F$font $size Tf $x $y Td ($s) Tj ET");
 }
 
@@ -236,6 +292,7 @@ sub stringc {
   $self->{'pdf'}->page_stream($self);
   $self->{'pdf'}->uses_font($self, $font);
   $x -= $size * $self->string_width($font, $s) / 2;
+  $s =~ s|([()])|\\$1|g;
   $self->{'pdf'}->add(" BT /F$font $size Tf $x $y Td ($s) Tj ET");
 }
 
@@ -250,6 +307,58 @@ sub string_width {
     $w += $$font_widths{$fname}[ord $c];
   }
   $w / 1000;
+}
+
+sub image {
+  my $self = shift;
+  my %params = @_;
+
+  my $img = $params{'image'} || "1.2";;
+  my $image = $img->{num};
+  my $xpos = $params{'xpos'} || 0;
+  my $ypos = $params{'ypos'} || 0;
+  my $xalign = $params{'xalign'} || 0;
+  my $yalign = $params{'yalign'} || 0;
+  my $xscale = $params{'xscale'} || 1;
+  my $yscale = $params{'yscale'} || 1;
+  my $rotate = $params{'rotate'} || 0;
+  my $xskew = $params{'xskew'} || 0;
+  my $yskew = $params{'yskew'} || 0;
+
+  $xscale*=$img->{width};
+  $yscale*=$img->{height};
+
+  if ($xalign == 1) {
+      $xpos-=$img->{width}/2;
+  } elsif ($xalign == 2) {
+      $xpos-=$img->{width};
+  }
+
+  if ($yalign == 1) {
+      $ypos-=$img->{height}/2;
+  } elsif ($yalign == 2) {
+      $ypos-=$img->{height};
+  }
+  
+  $self->{'pdf'}->page_stream($self);
+  $self->{'pdf'}->uses_xobject($self, $image);
+  $self->{'pdf'}->add("q\n");
+  $self->{'pdf'}->add("1 0 0 1 $xpos $ypos cm\n") if ( $xpos || $ypos );
+  if ( $rotate ) {
+      my $sinth = sin($rotate);
+      my $costh = cos($rotate);
+      $self->{'pdf'}->add("$costh $sinth -$sinth $costh 0 0 cm\n");
+  }
+  if ( $xscale || $yscale ) {
+      $self->{'pdf'}->add("$xscale 0 0 $yscale 0 0 cm\n");
+  }
+  if ( $xskew || $yskew ) {
+      my $tana = sin($xskew)/cos($xskew);
+      my $tanb = sin($yskew)/cos($xskew);
+      $self->{'pdf'}->add("1 $tana $tanb 1 0 0 cm\n");
+  }
+  $self->{'pdf'}->add("/Image$image Do\n");
+  $self->{'pdf'}->add("Q\n");
 }
 
 #########################
