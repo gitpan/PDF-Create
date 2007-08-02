@@ -1,4 +1,9 @@
 
+Version 0.07
+- Markus Baertschi, markus@markus.org
+  Added image samples to sample.pl
+  Touched up the README
+
 Version 0.06
 - Fabien Tassin
   Added support for JPEG and GIF images

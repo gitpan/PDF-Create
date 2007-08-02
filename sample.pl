@@ -1,49 +1,65 @@
 #!/usr/bin/perl -w
+#
+# sample PDF::Create usage
+#
 
 BEGIN { unshift @INC, "lib", "../lib" }
 use strict;
+use PDF::Create;
 
-    use PDF::Create;
+my $pdf = new PDF::Create('filename' => 'sample.pdf',
+		   			      'Version'  => 1.2,
+					      'PageMode' => 'UseOutlines',
+					      'Author'   => 'Fabien Tassin',
+						  'Title'    => 'Sample Document',
+						);
 
-    my $pdf = new PDF::Create('filename' => 'mypdf.pdf',
-			      'Version'  => 1.2,
-			      'PageMode' => 'UseOutlines',
-			      'Author'   => 'Fabien Tassin',
-			      'Title'    => 'My title',
-			 );
-    my $root = $pdf->new_page('MediaBox'  => [ 0, 0, 612, 792 ]);
+my $root = $pdf->new_page('MediaBox' => $pdf->get_page_size('A4'));
 
-    # Add a page which inherits its attributes from $root
-    my $page = $root->new_page;
+# Prepare 2 fonts
+my $f1 = $pdf->font('Subtype'  => 'Type1',
+	 	   	        'Encoding' => 'WinAnsiEncoding',
+			        'BaseFont' => 'Helvetica');
+my $f2 = $pdf->font('Subtype'  => 'Type1',
+			        'Encoding' => 'WinAnsiEncoding',
+			        'BaseFont' => 'Helvetica-Bold');
 
-    # Prepare 2 fonts
-    my $f1 = $pdf->font('Subtype'  => 'Type1',
- 	   	        'Encoding' => 'WinAnsiEncoding',
- 		        'BaseFont' => 'Helvetica');
-    my $f2 = $pdf->font('Subtype'  => 'Type1',
- 		        'Encoding' => 'WinAnsiEncoding',
- 		        'BaseFont' => 'Helvetica-Bold');
+# Prepare a Table of Content
+my $toc = $pdf->new_outline('Title' => 'Sample Document');
 
-    # Prepare a Table of Content
-    my $toc = $pdf->new_outline('Title' => 'Document',
-                                'Destination' => $page);
-    $toc->new_outline('Title' => 'Section 1');
-    my $s2 = $toc->new_outline('Title' => 'Section 2', 'Status' => 'closed');
-    $s2->new_outline('Title' => 'Subsection 1');
+# Add a page which inherits its attributes from $root
+my $page = $root->new_page;
+# Add a entry to the outline
+$toc->new_outline('Title' => 'Page 1', 'Destination' => $page);
 
-    $page->stringc($f2, 40, 306, 426, "PDF::Create");
-    $page->stringc($f1, 20, 306, 396, "version $PDF::Create::VERSION");
+# Write some text to the page
+$page->stringc($f2, 40, 306, 426, "PDF::Create");
+$page->stringc($f1, 20, 306, 396, "version $PDF::Create::VERSION");
+$page->stringc($f1, 20, 300, 300, 'Fabien Tassin');
+$page->stringc($f1, 20, 300, 250, 'Markus Baertschi (markus@markus.org)');
 
-    # Add another page
-    my $page2 = $root->new_page;
-    $page2->line(0, 0, 612, 792);
-    $page2->line(0, 792, 612, 0);
+# add another page
+my $page2 = $root->new_page;
+my $s2 = $toc->new_outline('Title' => 'Page 2', 'Destination' => $page2);
+$s2->new_outline('Title' => 'GIF');
+$s2->new_outline('Title' => 'JPEG');
 
-    $toc->new_outline('Title' => 'Section 3');
-    $pdf->new_outline('Title' => 'Summary');
+# Draw a border around the page (A4 max is 595/842)
+$page2->line(10, 10, 10, 832);
+$page2->line(10, 10, 585, 10);
+$page2->line(10, 832, 585, 832);
+$page2->line(585, 10, 585, 832);
 
-    # Add something to the first page
-    $page->stringc($f1, 20, 306, 300, 'by Fabien Tassin <fta@oleane.net>');
+# Add a gif image
+$page2->string($f1, 20, 50, 600, 'GIF Image:');
+my $img1 = $pdf->image('pdf-logo.gif');
+$page2->image('image'=>$img1, 'xscale'=>0.2,'yscale'=>0.2,'xpos'=>200,'ypos'=>600);
 
-    # Add the missing PDF objects and a the footer then close the file
-    $pdf->close;
+# Add a jpeg image
+$page2->string($f1, 20, 50, 500, 'JPEG Image:');
+my $img2 = $pdf->image('pdf-logo.jpg');
+$page2->image('image'=>$img2, 'xscale'=>0.2,'yscale'=>0.2,'xpos'=>200,'ypos'=>500);
+
+# Wrap up the PDF and close the file
+$pdf->close;
+
