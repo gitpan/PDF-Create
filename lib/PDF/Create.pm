@@ -22,7 +22,7 @@ use PDF::Image::JPEGImage;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 0.07;
+$VERSION = 0.06;
 $DEBUG   = 0;
 
 sub new {
