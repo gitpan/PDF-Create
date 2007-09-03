@@ -15,6 +15,12 @@
     Documents are constructed on the fly so the memory footprint is
     not tied to the size of the pages but only to their number.
 
+    It's main advantage over the other PDF modules is that it does
+    not depend on other modules and is perl only (no compiler needed).
+    If you want a quick and dirty way of creating pdf's, PDF::Create
+    is for you. If you need a complete Framework to create complex
+    PDF stuff, you better dive into the PDF::API2 based modules.
+    
     More information about this module is included in this package.
 
   SYNOPSIS
@@ -44,8 +50,7 @@
         my $toc = $pdf->new_outline('Title' => 'Document',
                                     'Destination' => $page);
         $toc->new_outline('Title' => 'Section 1');
-        my $s2 = $toc->new_outline('Title' => 'Section 2',
-                                   'Status' => 'closed');
+        my $s2 = $toc->new_outline('Title' => 'Section 2');
         $s2->new_outline('Title' => 'Subsection 1');
 
         $page->stringc($f2, 40, 306, 426, "PDF::Create");
@@ -97,16 +102,15 @@
 
   AUTHORS
 
-    Fabien Tassin
+    - Fabien Tassin
 
-    - Author of this module
+    Original Author of PDF::Create
 
-    Markus Baertschi (markus@markus.org)
+    - Markus Baertschi, markus@markus.org
 
-    - Maintainer 
-
-    Unfortunately he has vanished from the net, so I have taken over maintenance.
-    I've got a more recent version by Fabien which he sent by PM to me, but never
-    got around to publish it on CPAN.
+    I have taken over maintenence of PDF::Create as Fabien has disappeared
+    and did no longer maintain it in the last years.
+    The last version of PDF::Create from Fabien is 0.06. All never versions
+    have been modified by me.
 
 

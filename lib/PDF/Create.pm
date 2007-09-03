@@ -1,12 +1,16 @@
 # -*- mode: Perl -*-
-
+#
 # PDF::Create - create PDF files
+#
 # Author: Fabien Tassin <fta@sofaraway.org>
-# Version: 0.06
+#
+# Version: 0.08
+#
 # Copyright 1999-2001 Fabien Tassin <fta@sofaraway.org>
-
-# bugs:
-# - ...
+# Copyright 2007  Markus Baertschi
+#
+# 03.09.2007  0.08  Markus Baertschi
+#                   - Fixed error cheking on file open
 
 package PDF::Create;
 
@@ -22,7 +26,7 @@ use PDF::Image::JPEGImage;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 0.06;
+$VERSION = 0.08;
 $DEBUG   = 0;
 
 sub new {
@@ -53,8 +57,8 @@ sub new {
   elsif (defined $params{'filename'}) {
     $self->{'filename'} = $params{'filename'};
     my $fh = new FileHandle "> $self->{'filename'}";
+    carp "PDF::Create.pm: $self->{'filename'}: $!\n" unless defined $fh;
     binmode $fh;
-    carp "Error: can't open $self->{'filename'}: $!\n" unless defined $fh;
     $self->{'fh'} = $fh;
   }
   $self->{'catalog'} = {};
@@ -1282,7 +1286,7 @@ Fabien Tassin (fta@sofaraway.org)
 
 GIF and JPEG-support: Michael Gross (mdgrosse@sbox.tugraz.at)
 
-Packaging and maintenence on CPAN: Markus Baertschi (markus@markus.org)
+Maintenence since 2007: Markus Baertschi (markus@markus.org)
 
 =head1 COPYRIGHT
 
