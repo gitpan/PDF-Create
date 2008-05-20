@@ -26,7 +26,7 @@ use PDF::Image::JPEGImage;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 0.08;
+$VERSION = 0.9;
 $DEBUG   = 0;
 
 sub new {
@@ -445,28 +445,28 @@ sub get_page_size {
   my $name = lc(shift);
   
   my %pagesizes = (
-     'a0'         => [ 0, 0, 2380, 3368 ],
-     'a1'         => [ 0, 0, 1684, 2380 ],
-     'a2'         => [ 0, 0, 1190, 1684 ],
-     'a3'         => [ 0, 0, 842,  1190 ],
-     'a4'         => [ 0, 0, 595,  842  ],
-     'a4L'        => [ 0, 0, 842,  595  ],
-     'a5'         => [ 0, 0, 421,  595  ],
-     'a6'         => [ 0, 0, 297,  421  ],
-     'letter'     => [ 0, 0, 612,  792  ],
-     'broadsheet' => [ 0, 0, 1296, 1584 ],
-     'ledger'     => [ 0, 0, 1224, 792  ],
-     'tabloid'    => [ 0, 0, 792,  1224 ],
-     'legal'      => [ 0, 0, 612,  1008 ],
-     'executive'  => [ 0, 0, 522,  756  ],
-     '36x36'      => [ 0, 0, 2592, 2592 ],
+     'A0'         => [ 0, 0, 2380, 3368 ],
+     'A1'         => [ 0, 0, 1684, 2380 ],
+     'A2'         => [ 0, 0, 1190, 1684 ],
+     'A3'         => [ 0, 0, 842,  1190 ],
+     'A4'         => [ 0, 0, 595,  842  ],
+     'A4L'        => [ 0, 0, 842,  595  ],
+     'A5'         => [ 0, 0, 421,  595  ],
+     'A6'         => [ 0, 0, 297,  421  ],
+     'LETTER'     => [ 0, 0, 612,  792  ],
+     'BROADSHEET' => [ 0, 0, 1296, 1584 ],
+     'LEDGER'     => [ 0, 0, 1224, 792  ],
+     'TABLOID'    => [ 0, 0, 792,  1224 ],
+     'LEGAL'      => [ 0, 0, 612,  1008 ],
+     'EXECUTIVE'  => [ 0, 0, 522,  756  ],
+     '36X36'      => [ 0, 0, 2592, 2592 ],
   );
   
-  if (!$pagesizes{$name}) {
-      $name = "a4";
+  if (!$pagesizes{uc($name)}) {
+      $name = "A4";
   }
   
-  $pagesizes{$name};
+  $pagesizes{uc($name)};
 }  
 
 sub new_page {
@@ -485,6 +485,7 @@ sub new_page {
   $page->{'rotate'}    = $params{'Rotate'}    if defined $params{'Rotate'};
 
   $self->{'current_page'} = $page;
+
   $page;
 }
 
@@ -895,56 +896,53 @@ PDF::Create - create PDF files
 
 =head1 SYNOPSIS
 
-    use PDF::Create;
+use PDF::Create;
 
-    my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
-			      'Version'      => 1.2,
-			      'PageMode'     => 'UseOutlines',
-			      'Author'       => 'Fabien Tassin',
-			      'Title'        => 'My title',
-			      'CreationDate' => [ localtime ],
+my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
+			  'Version'      => 1.2,
+			  'PageMode'     => 'UseOutlines',
+			  'Author'       => 'John Doe',
+			  'Title'        => 'My Title',
+			  'CreationDate' => [ localtime ],
 			 );
-    my $root = $pdf->new_page('MediaBox' => [ 0, 0, 612, 792 ]);
-	
-	# add a A4 sized page
-    my $root = $pdf->new_page('MediaBox' => $pdf->get_page_size('A4'));
+# add a A4 sized page
+my $root = $pdf->new_page('MediaBox' => $pdf->get_page_size('A4'));
 
-    # Add a page which inherits its attributes from $root
-    my $page = $root->new_page;
+# Add a page which inherits its attributes from $root
+my $page = $root->new_page;
 
-    # Prepare 2 fonts
-    my $f1 = $pdf->font('Subtype'  => 'Type1',
- 	   	        'Encoding' => 'WinAnsiEncoding',
- 		        'BaseFont' => 'Helvetica');
-    my $f2 = $pdf->font('Subtype'  => 'Type1',
- 		        'Encoding' => 'WinAnsiEncoding',
- 		        'BaseFont' => 'Helvetica-Bold');
+# Prepare 2 fonts
+my $f1 = $pdf->font('Subtype'  => 'Type1',
+   		    'Encoding' => 'WinAnsiEncoding',
+ 		    'BaseFont' => 'Helvetica');
+my $f2 = $pdf->font('Subtype'  => 'Type1',
+ 		    'Encoding' => 'WinAnsiEncoding',
+ 		    'BaseFont' => 'Helvetica-Bold');
 
-    # Prepare a Table of Content
-    my $toc = $pdf->new_outline('Title' => 'Document',
-                                'Destination' => $page);
-    $toc->new_outline('Title' => 'Section 1');
-    my $s2 = $toc->new_outline('Title' => 'Section 2',
-                               'Status' => 'closed');
-    $s2->new_outline('Title' => 'Subsection 1');
+# Prepare a Table of Content
+my $toc = $pdf->new_outline('Title' => 'Document',
+                            'Destination' => $page);
+$toc->new_outline('Title' => 'Section 1');
+my $s2 = $toc->new_outline('Title' => 'Section 2',
+                           'Status' => 'closed');
+$s2->new_outline('Title' => 'Subsection 1');
 
-    $page->stringc($f2, 40, 306, 426, "PDF::Create");
-    $page->stringc($f1, 20, 306, 396, "version $PDF::Create::VERSION");
+$page->stringc($f2, 40, 306, 426, "PDF::Create");
+$page->stringc($f1, 20, 306, 396, "version $PDF::Create::VERSION");
 
-    # Add another page
-    my $page2 = $root->new_page;
-    $page2->line(0, 0, 612, 792);
-    $page2->line(0, 792, 612, 0);
+# Add another page
+my $page2 = $root->new_page;
+$page2->line(0, 0, 612, 792);
+$page2->line(0, 792, 612, 0);
 
-    $toc->new_outline('Title' => 'Section 3');
-    $pdf->new_outline('Title' => 'Summary');
+$toc->new_outline('Title' => 'Section 3');
+$pdf->new_outline('Title' => 'Summary');
 
-    # Add something to the first page
-    $page->stringc($f1, 20, 306, 300,
-                   'by Fabien Tassin <fta@sofaraway.org>');
+# Add something to the first page
+$page->stringc($f1, 20, 306, 300, 'by John Doe <john.doe@example.com>');
 
-    # Add the missing PDF objects and a the footer then close the file
-    $pdf->close;
+# Add the missing PDF objects and a the footer then close the file
+$pdf->close;
 
 =head1 DESCRIPTION
 
@@ -974,9 +972,7 @@ This will create an empty PDF structure. A lot of attributes can be
 used:
 
   - filename: destination file that will contain the resulting
-    PDF or ...
-
-  - fh: ... an already opened filehandle
+    PDF or an already opened filehandle or '-' for stdout.
 
   - Version: can be 1.0 to 1.3 (default: 1.2)
 
@@ -1012,13 +1008,13 @@ used:
 
 Example:
 
-        my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
-                                  'Version'      => 1.2,
-                                  'PageMode'     => 'UseOutlines',
-                                  'Author'       => 'Fabien Tassin',
-                                  'Title'        => 'My title',
-				  'CreationDate' => [ localtime ],
-                             );
+  my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
+                            'Version'      => 1.2,
+                            'PageMode'     => 'UseOutlines',
+                            'Author'       => 'John Doe',
+                            'Title'        => 'My title',
+			    'CreationDate' => [ localtime ],
+                           );
 
 The created object is returned.
 
@@ -1080,6 +1076,8 @@ for example the dimensions of an A4 sheet of paper. The coordinates
 are measured in default user space units. It must be the reference
 of a 4 values array. You can use C<get_page_size> to get the size of
 standard paper sizes.
+  C<get_page_size> knows about A0-A6, A4L (landscape), Letter, Legal,
+Broadsheet, Ledger, Tabloid, Executive and 36x36.
 
 - CropBox: Rectangle specifying the default clipping region for
 the page when displayed or printed. The default is the value of
@@ -1197,6 +1195,17 @@ Same as C<string> but right aligned.
 
 Same as C<string> but centered.
 
+=item C<printnl text font size x y>
+
+Similar to C<string> but parses the string for newline and prints each part
+on a separate line. Lines spacing is the same as the font-size. Returns the
+number of lines.
+
+Note the different parameter sequence. The first call should specify all
+parameters, font is the absolute minimum, a warning will be given for the
+missing y position and 800 will be assumed. All subsequent invocations can
+omit all but the string parameters.
+
 =item C<string_width font text>
 
 Return the size of the text using the given font in default user space units.
@@ -1209,6 +1218,11 @@ Draw a line between (x1, y1) and (x2, y2).
 =item C<set_width w>
 
 Set the width of subsequent lines to w points.
+
+=item C<setrgbcolor r g b>
+
+Set the color of the subsequent drawing operations. R,G and B is a value
+between 0.0 and 1.0.
 
 =head2 Low level drawing methods
 
@@ -1243,6 +1257,14 @@ Ends the path without filling or stroking it.
 =item C<stroke>
 
 Strokes the path.
+
+A typical usage is 
+
+$page->newpath;
+$page->setrgbcolorstroke 0.1 0.3 0.8;
+$page->moveto 100 100;
+$page->lineto 200 100;
+$page->stroke;
 
 =item C<closestroke>
 
@@ -1280,13 +1302,13 @@ Parameters can be:
 
 L<PDF::Create::Page(3)>, L<perl(1)>
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Fabien Tassin (fta@sofaraway.org)
 
 GIF and JPEG-support: Michael Gross (mdgrosse@sbox.tugraz.at)
 
-Maintenence since 2007: Markus Baertschi (markus@markus.org)
+Maintened since 2007: Markus Baertschi (markus@markus.org)
 
 =head1 COPYRIGHT
 
