@@ -7,28 +7,41 @@
 # Version: 0.08
 #
 # Copyright 1999-2001 Fabien Tassin <fta@sofaraway.org>
-# Copyright 2007  Markus Baertschi
+# Copyright 2007      Markus Baertschi <markus@markus.org>
 #
-# 03.09.2007  0.08  Markus Baertschi
-#                   - Fixed error cheking on file open
+# 03.09.2007  0.08  Markus Baertschi <markus@markus.org>
+#                   - Fixed error checking on file open
+#    04.2008  0.09  Markus Baertschi <markus@markus.org>
+#                   - Clarified documentation
+# 28.05.2008  0.10  Markus Baertschi <markus@markus.org>
+#                   - Additional error checking in encode
+#                   - Made DEBUG accessible from outside
+#                   - Add more debug statements
+#                   - Fixed 'Rotate'
+#                   - Added 'number' to encode (required for 'Rotate')
+#                   - More Comments and POD Cleanup
 
 package PDF::Create;
 
+our $VERSION = "0.10";
+our $DEBUG   = 0;
+
 use strict;
-use vars qw(@ISA @EXPORT $VERSION $DEBUG);
-use Exporter;
-use Carp;
+use Carp qw(confess croak cluck carp);
 use FileHandle;
 use PDF::Create::Page;
 use PDF::Create::Outline;
 use PDF::Image::GIFImage;
 use PDF::Image::JPEGImage;
+use vars qw($DEBUG);
 
+our (@ISA, @EXPORT, @EXPORT_OK, @EXPORT_FAIL);
+require Exporter;
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 0.9;
-$DEBUG   = 0;
+@EXPORT_OK = qw($DEBUG $VERSION);
 
+# Create a new object
 sub new {
   my $this = shift;
   my %params = @_;
@@ -83,10 +96,15 @@ sub new {
   return $self;
 }
 
+#
+# Close does the work of creating the PDF data from the
+# objects collected before.
+#
 sub close {
   my $self = shift;
   my %params = @_;
 
+  $self->debug("Closing PDF");
   $self->page_stream;
   $self->add_outlines if defined $self->{'outlines'};
   $self->add_catalog;
@@ -99,6 +117,10 @@ sub close {
   $self->{'data'};
 }
 
+#
+# Helper fonction for debugging
+# Prints the passed message if debugging is on
+#
 sub debug {
   return unless $DEBUG;
   my $self = shift;
@@ -108,6 +130,9 @@ sub debug {
   warn "PDF DEBUG: $s\n";
 }
 
+#
+# Set/Return the PDF version
+#
 sub version {
   my $self = shift;
   my $v = shift;
@@ -174,6 +199,10 @@ sub add_comment {
 sub encode {
   my $type = shift;
   my $val = shift;
+
+  if ($DEBUG) {if ($val) {warn("encode: $type $val");}
+                    else {warn("encode: $type (no val)");}}
+  if (! $type) {cluck "PDF::Create::encode: empty argument, called by "; return 1}
   ($type eq 'null' || $type eq 'number') && do {
     1; # do nothing
   } || $type eq 'cr' && do {
@@ -183,9 +212,12 @@ sub encode {
     $val eq '0' ? 'false' : 'true';
   } || $type eq 'string' && do {
     $val = "($val)"; # TODO: split it. Quote parentheses.
+  } || $type eq 'number' && do {
+    $val = "$val";
   } || $type eq 'name' && do {
     $val = "/$val";
   } || $type eq 'array' && do {
+    # array, encode contents individually
     my $s = '[';
     for my $v (@$val) {
       $s .= &encode($$v[0], $$v[1]) . " ";
@@ -222,7 +254,7 @@ sub encode {
     $s .= ">>" . &encode('cr') . "stream" . &encode('cr');
     $s .= $data . &encode('cr');
     $val = $s . "endstream" . &encode('cr');
-  } || die "Error: unknown type '$type'";
+  } || confess "Error: unknown type '$type'";
   # TODO: add type 'text';
   $val;
 }
@@ -311,6 +343,7 @@ sub stream {
 sub add_info {
   my $self = shift;
 
+  $self->debug("add_info");
   my %params = @_;
   $params{'Author'}       = $self->{'Author'}   if defined $self->{'Author'};
   $params{'Creator'}      = $self->{'Creator'}  if defined $self->{'Creator'};
@@ -345,6 +378,7 @@ sub add_info {
 sub add_catalog {
   my $self = shift;
 
+  $self->debug("add_catalog");
   my %params = %{$self->{'catalog'}};
   # Type (mandatory)
   $self->{'catalog'} = $self->reserve('Catalog');
@@ -369,6 +403,7 @@ sub add_catalog {
 sub add_outlines {
   my $self = shift;
 
+  $self->debug("add_outlines");
   my %params = @_;
   my $outlines = $self->reserve("Outlines");
 
@@ -492,6 +527,7 @@ sub new_page {
 sub add_pages {
   my $self = shift;
 
+  $self->debug("add_pages");
   # $self->page_stream;
   my %params = @_;
   # Type (required)
@@ -510,6 +546,7 @@ sub add_pages {
   $self->cr;
 
   for my $font (sort keys %{$self->{'fonts'}}) {
+    $self->debug("add_pages: font: $font");
     $self->{'fontobj'}{$font} = $self->reserve('Font');
     $self->add_object(
       $self->indirect_obj(
@@ -518,6 +555,7 @@ sub add_pages {
   }
 
   for my $xobject (sort keys %{$self->{'xobjects'}}) {
+    $self->debug("add_pages: object: $xobject");
     $self->{'xobj'}{$xobject} = $self->reserve('XObject');
     $self->add_object(
       $self->indirect_obj(
@@ -534,6 +572,7 @@ sub add_pages {
 
   for my $page ($self->{'pages'}->list) {
     my $name = $page->{'name'};
+    $self->debug("add_pages: page: $name");
     my $type = 'Page' .
       (defined $page->{'Kids'} && scalar @{$page->{'Kids'}} ? 's' : '');
     # Type (required)
@@ -585,7 +624,7 @@ sub add_pages {
 	$$content{$K} = $self->array(@$l);
       }
     }
-    $$content{'Rotate'} = $page->{'rotate'} if defined $page->{'rotate'};
+    $$content{'Rotate'} = $self->number($page->{'rotate'}) if defined $page->{'rotate'};
     if ($type eq 'Page') {
       $$content{'Parent'} = $self->indirect_ref(@{$page->{'Parent'}{'id'}});
       # Content
@@ -726,6 +765,8 @@ sub cr {
 sub page_stream {
   my $self = shift;
   my $page = shift;
+#  $self->debug("page_stream: page=$page");
+
   if (defined $self->{'reservations'}{'stream_length'}) {
     ## If it is the same page, use the same stream.
     $self->cr, return if defined $page && defined $self->{'stream_page'} &&
@@ -896,72 +937,72 @@ PDF::Create - create PDF files
 
 =head1 SYNOPSIS
 
-use PDF::Create;
+  use PDF::Create;
 
-my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
-			  'Version'      => 1.2,
-			  'PageMode'     => 'UseOutlines',
-			  'Author'       => 'John Doe',
-			  'Title'        => 'My Title',
-			  'CreationDate' => [ localtime ],
-			 );
-# add a A4 sized page
-my $root = $pdf->new_page('MediaBox' => $pdf->get_page_size('A4'));
+  my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
+			    'Version'      => 1.2,
+			    'PageMode'     => 'UseOutlines',
+			    'Author'       => 'John Doe',
+			    'Title'        => 'My Title',
+			    'CreationDate' => [ localtime ],
+			   );
+  # add a A4 sized page
+  my $root = $pdf->new_page('MediaBox' => $pdf->get_page_size('A4'));
 
-# Add a page which inherits its attributes from $root
-my $page = $root->new_page;
+  # Add a page which inherits its attributes from $root
+  my $page = $root->new_page;
 
-# Prepare 2 fonts
-my $f1 = $pdf->font('Subtype'  => 'Type1',
-   		    'Encoding' => 'WinAnsiEncoding',
- 		    'BaseFont' => 'Helvetica');
-my $f2 = $pdf->font('Subtype'  => 'Type1',
- 		    'Encoding' => 'WinAnsiEncoding',
- 		    'BaseFont' => 'Helvetica-Bold');
+  # Prepare 2 fonts
+  my $f1 = $pdf->font('Subtype'  => 'Type1',
+   		      'Encoding' => 'WinAnsiEncoding',
+ 		      'BaseFont' => 'Helvetica');
+  my $f2 = $pdf->font('Subtype'  => 'Type1',
+ 		      'Encoding' => 'WinAnsiEncoding',
+ 		      'BaseFont' => 'Helvetica-Bold');
 
-# Prepare a Table of Content
-my $toc = $pdf->new_outline('Title' => 'Document',
-                            'Destination' => $page);
-$toc->new_outline('Title' => 'Section 1');
-my $s2 = $toc->new_outline('Title' => 'Section 2',
-                           'Status' => 'closed');
-$s2->new_outline('Title' => 'Subsection 1');
+  # Prepare a Table of Content
+  my $toc = $pdf->new_outline('Title' => 'Document',
+                              'Destination' => $page);
+  $toc->new_outline('Title' => 'Section 1');
+  my $s2 = $toc->new_outline('Title' => 'Section 2',
+                             'Status' => 'closed');
+  $s2->new_outline('Title' => 'Subsection 1');
 
-$page->stringc($f2, 40, 306, 426, "PDF::Create");
-$page->stringc($f1, 20, 306, 396, "version $PDF::Create::VERSION");
+  $page->stringc($f2, 40, 306, 426, "PDF::Create");
+  $page->stringc($f1, 20, 306, 396, "version $PDF::Create::VERSION");
 
-# Add another page
-my $page2 = $root->new_page;
-$page2->line(0, 0, 612, 792);
-$page2->line(0, 792, 612, 0);
+  # Add another page
+  my $page2 = $root->new_page;
+  $page2->line(0, 0, 612, 792);
+  $page2->line(0, 792, 612, 0);
 
-$toc->new_outline('Title' => 'Section 3');
-$pdf->new_outline('Title' => 'Summary');
+  $toc->new_outline('Title' => 'Section 3');
+  $pdf->new_outline('Title' => 'Summary');
 
-# Add something to the first page
-$page->stringc($f1, 20, 306, 300, 'by John Doe <john.doe@example.com>');
+  # Add something to the first page
+  $page->stringc($f1, 20, 306, 300, 'by John Doe <john.doe@example.com>');
 
-# Add the missing PDF objects and a the footer then close the file
-$pdf->close;
+  # Add the missing PDF objects and a the footer then close the file
+  $pdf->close;
 
 =head1 DESCRIPTION
 
-PDF::Create allows you to create PDF documents using a large number
-of primitives, and emit the result as a PDF file or stream.
+PDF::Create allows you to create PDF documents using a number of
+primitives. The result is as a PDF file or stream.
+
 PDF stands for Portable Document Format.
 
 Documents can have several pages, a table of content, an information
-section and many other PDF elements. More functionnalities will be
-added as needs arise.
+section and many other PDF elements.
 
-Documents are constructed on the fly so the memory footprint is not
+Documents are built on the fly so the memory footprint is not
 tied to the size of the pages but only to their number.
 
 =head1 Methods
 
 =over 5
 
-=item C<new>
+=item new
 
 To create a new PDF, send a new() message to the PDF::Create class.
 For example:
@@ -1018,22 +1059,22 @@ Example:
 
 The created object is returned.
 
-=item C<close>
+=item close
 
-Add the missing sections needed to obtain a complete and valid PDF
-document then close the file if needed.
+Most of the real work building the PDF is performed in the close method.
+It can there fore not be omitted, like a file close.
 
-=item C<get_data>
+=item get_data
 
 If you didn't ask the $pdf object to write its output to a file, you
 can pick up the pdf code by calling this method. It returns a big string.
 You need to call C<close> first, mind.
 
-=item C<add_comment [string]>
+=item add_comment [string]
 
 Add a comment to the document.
 
-=item C<new_outline [parameters]>
+=item new_outline [parameters]
 
 Add an outline to the document using the given parameters.
 Return the newly created outline.
@@ -1051,15 +1092,15 @@ outline object.
 
 Example:
 
-          my $outline = $pdf->new_outline('Title' => 'Item 1',
-                                          'Destination' => $page);
-          $outline->new_outline('Title' => 'Item 1.1');
-          $pdf->new_outline('Title' => 'Item 1.2',
-                            'Parent' => $outline);
-          $pdf->new_outline('Title' => 'Item 2');
+  my $outline = $pdf->new_outline('Title' => 'Item 1',
+                                  'Destination' => $page);
+  $outline->new_outline('Title' => 'Item 1.1');
+  $pdf->new_outline('Title' => 'Item 1.2',
+                    'Parent' => $outline);
+  $pdf->new_outline('Title' => 'Item 2');
 
 
-=item C<new_page>
+=item new_page
 
 Add a page to the document using the given parameters.
 Return the newly created page.
@@ -1103,16 +1144,17 @@ fall outside the bleed box. The default is the value of the CropBox.
 
 - Rotate: Specifies the number of degrees the page should be rotated
 clockwise when it is displayed or printed. This value must be zero
-(the default) or a multiple of 90.
+(the default) or a multiple of 90. The entire page, including contents
+is rotated.
 
-=item C<get_page_size>
+=item get_page_size
 
 Returns the size of standard paper sizes to use for MediaBox-parameter
 of C<new_page>. C<get_page_size> has one required parameter to 
 specify the paper name. Possible values are a0-a6, letter, broadsheet,
 ledger, tabloid, legal, executive and 36x36. Default is a4.
 
-=item C<font>
+=item font
 
 Prepare a font using the given arguments. This font will be added
 to the document only if it is used at least once before the close method
@@ -1133,18 +1175,18 @@ In this version, only WinAnsiEncoding is supported. This is the default
 value.
 
 - BaseFont: The PostScript name of the font. It can be one of the following
-base font: Courier, Courier-Bold, Courier-BoldOblique, Courier-Oblique,
+base fonts: Courier, Courier-Bold, Courier-BoldOblique, Courier-Oblique,
 Helvetica, Helvetica-Bold, Helvetica-BoldOblique, Helvetica-Oblique,
-Times-Roman, Times-Bold, Times-Italic, Times-BoldItalic, Symbol or
-ZapfDingbats. All of them are supported in this version except the last two
-ones.
+Times-Roman, Times-Bold, Times-Italic or Times-BoldItalic.
 
-The default value is Helvetica.
+The Symbol or ZapfDingbats fonts are not supported in this version.
 
-=item C<image filename>
+The default font is Helvetica.
+
+=item image filename
 
 Prepare an XObject (image) using the given arguments. This image will be added
-to the document only if it is used at least once before the close method
+to the document if it is referenced at least once before the close method
 is called. In this version GIF, interlaced GIF and JPEG is supported. 
 Usage of interlaced GIFs are slower because they are decompressed, modified 
 and compressed again.
@@ -1152,6 +1194,8 @@ and compressed again.
 Parameters: 
 
 - filename: file name of image (required).
+
+=back
 
 =head2 Page methods
 
@@ -1164,13 +1208,15 @@ drawing (using PostScript like paths) and one for writing.
 Some methods are not described here because they must not be called
 directly (e.g. C<new> and C<add>).
 
-=item C<new_page params>
+=over 5
+
+=item new_page params
 
 Add a sub-page to the current page.
 
 See C<PDF::Create::new_page>
 
-=item C<string font size x y text>
+=item string font size x y text
 
 Add text to the current page using the font object at the given size and
 position. The point (x, y) is the bottom left corner of the rectangle
@@ -1183,19 +1229,19 @@ Example :
  		        'BaseFont' => 'Helvetica');
     $page->string($f1, 20, 306, 396, "some text");
 
-=item C<stringl font size x y text>
+=item stringl font size x y text
 
 Same as C<string>.
 
-=item C<stringr font size x y text>
+=item stringr font size x y text
 
 Same as C<string> but right aligned.
 
-=item C<stringc font size x y text>
+=item stringc font size x y text
 
 Same as C<string> but centered.
 
-=item C<printnl text font size x y>
+=item printnl text font size x y
 
 Similar to C<string> but parses the string for newline and prints each part
 on a separate line. Lines spacing is the same as the font-size. Returns the
@@ -1206,55 +1252,59 @@ parameters, font is the absolute minimum, a warning will be given for the
 missing y position and 800 will be assumed. All subsequent invocations can
 omit all but the string parameters.
 
-=item C<string_width font text>
+=item string_width font text
 
 Return the size of the text using the given font in default user space units.
 This does not contain the size of the font yet.
 
-=item C<line x1 y1 x2 y2>
+=item line x1 y1 x2 y2
 
 Draw a line between (x1, y1) and (x2, y2).
 
-=item C<set_width w>
+=item set_width w
 
 Set the width of subsequent lines to w points.
 
-=item C<setrgbcolor r g b>
+=item setrgbcolor r g b
 
 Set the color of the subsequent drawing operations. R,G and B is a value
 between 0.0 and 1.0.
 
+=back
+
 =head2 Low level drawing methods
 
-=item C<moveto x y>
+=over 5
+
+=item moveto x y
 
 Moves the current point to (x, y), omitting any connecting line segment.
 
-=item C<lineto x y>
+=item lineto x y
 
 Appends a straight line segment from the current point to (x, y).
 The current point is (x, y).
 
-=item C<curveto x1 y1 x2 y2 x3 y3>
+=item curveto x1 y1 x2 y2 x3 y3
 
 Appends a Bezier curve to the path. The curve extends from the current
 point to (x3 ,y3) using (x1 ,y1) and (x2 ,y2) as the Bezier control
 points. The new current point is (x3 ,y3).
 
-=item C<rectangle x y w h>
+=item rectangle x y w h
 
 Adds a rectangle to the current path.
 
-=item C<closepath>
+=item closepath
 
 Closes the current subpath by appending a straight line segment
 from the current point to the starting point of the subpath.
 
-=item C<newpath>
+=item newpath
 
 Ends the path without filling or stroking it.
 
-=item C<stroke>
+=item stroke
 
 Strokes the path.
 
@@ -1266,19 +1316,19 @@ $page->moveto 100 100;
 $page->lineto 200 100;
 $page->stroke;
 
-=item C<closestroke>
+=item closestroke
 
 Closes and strokes the path.
 
-=item C<fill>
+=item fill
 
 Fills the path using the non-zero winding number rule.
 
-=item C<fill2>
+=item fill2
 
 Fills the path using the even-odd rule
 
-=item C<image image_id xpos ypos xalign yalign xscale yscale rotate xskew yskew>
+=item image image_id xpos ypos xalign yalign xscale yscale rotate xskew yskew
 
 Inserts an image.
 
@@ -1300,7 +1350,7 @@ Parameters can be:
 
 =head1 SEE ALSO
 
-L<PDF::Create::Page(3)>, L<perl(1)>
+L<PDF::Create::Page>, L<perl>, L<http://www.adobe.com/devnet/pdf/pdf_reference.html>
 
 =head1 AUTHORS
 
@@ -1308,7 +1358,7 @@ Fabien Tassin (fta@sofaraway.org)
 
 GIF and JPEG-support: Michael Gross (mdgrosse@sbox.tugraz.at)
 
-Maintened since 2007: Markus Baertschi (markus@markus.org)
+Maintenance since 2007: Markus Baertschi (markus@markus.org)
 
 =head1 COPYRIGHT
 
@@ -1318,5 +1368,7 @@ this copyright notice remain attached to the file. You may
 modify this module as you wish, but if you redistribute a
 modified version, please attach a note listing the modifications
 you have made.
+
+Copyright 2007-, Markus Baertschi
 
 =cut
