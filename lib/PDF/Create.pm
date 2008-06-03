@@ -4,8 +4,6 @@
 #
 # Author: Fabien Tassin <fta@sofaraway.org>
 #
-# Version: 0.08
-#
 # Copyright 1999-2001 Fabien Tassin <fta@sofaraway.org>
 # Copyright 2007      Markus Baertschi <markus@markus.org>
 #
@@ -27,7 +25,7 @@
 
 package PDF::Create;
 
-our $VERSION = "1.00";
+our $VERSION = "1.01";
 our $DEBUG   = 0;
 
 use strict;
@@ -35,8 +33,8 @@ use Carp qw(confess croak cluck carp);
 use FileHandle;
 use PDF::Create::Page;
 use PDF::Create::Outline;
-use PDF::Image::GIFImage;
-use PDF::Image::JPEGImage;
+use PDF::Image::GIF;
+use PDF::Image::JPEG;
 use vars qw($DEBUG);
 
 our (@ISA, @EXPORT, @EXPORT_OK, @EXPORT_FAIL);
@@ -847,9 +845,9 @@ sub image {
   my $s;
 
   if ($filename=~/\.gif$/i) {
-      $self->{'images'}{$num} = GIFImage->new();
+      $self->{'images'}{$num} = PDF::Image::GIF->new();
   } elsif ($filename=~/\.jpg$/i || $filename=~/\.jpeg$/i) {
-      $self->{'images'}{$num} = JPEGImage->new();
+      $self->{'images'}{$num} = PDF::Image::JPEG->new();
   }
 
   $image = $self->{'images'}{$num};
@@ -1370,13 +1368,14 @@ Parameters can be:
 
 =head1 SEE ALSO
 
-L<PDF::Create::Page>, L<perl>, L<http://www.adobe.com/devnet/pdf/pdf_reference.html>
+L<PDF::Create::Page>, L<http://www.adobe.com/devnet/pdf/pdf_reference.html>
+L<http://github.com/markusb/pdf-create>
 
 =head1 AUTHORS
 
 Fabien Tassin (fta@sofaraway.org)
 
-GIF and JPEG-support: Michael Gross (mdgrosse@sbox.tugraz.at)
+GIF and JPEG-support: Michael Gross (info@mdgrosse.net)
 
 Maintenance since 2007: Markus Baertschi (markus@markus.org)
 

@@ -1,16 +1,18 @@
 # -*- mode: Perl -*-
 
-# PDF::Image::JPEGImage - JPEG image support
-# Author: Michael Gross <mdgrosse@sbox.tugraz.at>
-# Version: 0.07
-# Copyright 2001 Michael Gross <mdgrosse@sbox.tugraz.at>
+# PDF::Image::JPEG - JPEG image support
+# Author: Michael Gross <info@mdgrosse.net>
+#
+# Copyright 2001 Michael Gross <info@mdgrosse.net>
 # Copyright 2007 Markus Baertschi <markus@markus.org>
 #
 # 27.11.2001 - Bugfix, now also works on Windows (binmode) 
 # 03.09.2007  0.07  Markus Baertschi
 #                   - Added error checking on file open
+# 31.05.2008  1.00  Markus Baertschi <markus@markus.org>
+# 		    - Set version to 1.00 to go with PDF::Create
 
-package JPEGImage;
+package PDF::Image::JPEG;
 use strict;
 use vars qw(@ISA @EXPORT $VERSION $DEBUG);
 use Exporter;
@@ -18,7 +20,7 @@ use FileHandle;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 0.07;
+$VERSION = 1.00;
 $DEBUG   = 0;
 
 sub new {
@@ -159,7 +161,7 @@ sub Open {
     my $components = 0;
 
     my $fh = new FileHandle $filename;
-    if (!defined $fh) { $self->{error} = "JPEGImage.pm: $filename: $!"; return 0 }
+    if (!defined $fh) { $self->{error} = "PDF::Image::JPEG.pm: $filename: $!"; return 0 }
     binmode $fh;
     
     #Tommy's special trick for Macintosh JPEGs: simply skip some
@@ -173,7 +175,7 @@ sub Open {
 
         if (eof($fh)) {
             close($fh);
-            $self->{error} = "JPEGImage.pm: Not a JPEG file.";
+            $self->{error} = "PDF::Image::JPEG.pm: Not a JPEG file.";
             return 0;
         }
 
@@ -196,7 +198,7 @@ sub Open {
     # handle - regard as hopeless...
     if (eof($fh) || $self->{private}->{datapos} > $BOGUS_LENGTH) {
         close($fh);
-        $self->{error} = "JPEGImage.pm: Not a JPEG file.";
+        $self->{error} = "PDF::Image::JPEG.pm: Not a JPEG file.";
         return 0;
     }
 
@@ -205,13 +207,13 @@ sub Open {
         #print "Marker: " . sprintf("%x", $c) . "\n";
         if ($c==$M_ERROR || $c==$M_SOF3 || $c==$M_SOF5 || $c==$M_SOF6 || $c==$M_SOF7 || $c==$M_SOF9 || $c==$M_SOF11 || $c==$M_SOF13 || $c==$M_SOF14 || $c==$M_SOF15) {
             close($fh);
-            $self->{error} = "JPEGImage.pm: JPEG compression " . ord($c) . " not supported in PDF 1.3.",
+            $self->{error} = "PDF::Image::JPEG.pm: JPEG compression " . ord($c) . " not supported in PDF 1.3.",
             return 0;
         }    
 
         if ($c==$M_SOF2 || $c==$M_SOF10) {
             close($fh);
-            $self->{error} = "JPEGImage.pm: JPEG compression " . ord($c) . " not supported in PDF 1.2.",
+            $self->{error} = "PDF::Image::JPEG.pm: JPEG compression " . ord($c) . " not supported in PDF 1.2.",
             return 0;
         }    
 
@@ -271,13 +273,13 @@ sub Open {
 
     if ($self->{height} <= 0 || $self->{width} <= 0 || $components <= 0) {
         close($fh);
-        $self->{error} = "JPEGImage.pm: Bad image parameters in JPEG file.";
+        $self->{error} = "PDF::Image::JPEG.pm: Bad image parameters in JPEG file.";
         return 0;
     }
 
     if ($self->{bpc} != 8) {
         close($fh);
-        $self->{error} = "JPEGImage.pm: Bad bpc in JPEG file.";
+        $self->{error} = "PDF::Image::JPEG.pm: Bad bpc in JPEG file.";
         return 0;
     }
 
@@ -293,7 +295,7 @@ sub Open {
         }
     } else {       
         close($fh);
-        $self->{error} = "JPEGImage.pm: Unknown number of color components in JPEG file.",
+        $self->{error} = "PDF::Image::JPEG.pm: Unknown number of color components in JPEG file.",
         return 0;
     }
 
@@ -308,7 +310,7 @@ sub ReadData {
     my $result;
     my $JPEG_BUFSIZE = 1024;
     my $fh = new FileHandle $self->{filename};
-    if (!defined $fh) { $self->{error} = "JPEGImage.pm: $self->{filename}: $!"; return 0 }
+    if (!defined $fh) { $self->{error} = "PDF::Image::JPEG.pm: $self->{filename}: $!"; return 0 }
     binmode $fh;
     seek($fh, $self->{private}->{datapos}, 0);
     

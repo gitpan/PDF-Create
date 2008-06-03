@@ -1,0 +1,127 @@
+commit 0e9a7ef...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jun 3 12:28:59 2008 +0200
+
+    Renamed Image modules to fix bug 28636 (rt.cpan.org).
+
+commit 7acfe62...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jun 3 10:53:56 2008 +0200
+
+    Updates Michael's email, added reference to git repository at github
+
+commit e52ef1f...
+Merge: 88fad3e... 875425d...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sat May 31 19:26:23 2008 +0200
+
+    Merge branch 'master' of git://github.com/markusb/pdf-create
+
+commit 88fad3e...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sat May 31 19:20:33 2008 +0200
+
+    Updated version to 1.0 to fit better with PDF::Create and show maturity
+
+commit ccf26de...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sat May 31 19:18:35 2008 +0200
+
+    Updated build system to generate Changes file directly from git log
+
+commit 28b0922...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sat May 31 12:49:32 2008 +0200
+
+    Version 1.0
+
+commit 875425d...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sat May 31 12:49:32 2008 +0200
+
+    Version 1.0
+
+commit 9adbcbf...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sat May 31 12:05:17 2008 +0200
+
+    More POD fixing
+
+commit 6f7ba3f...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sat May 31 11:23:50 2008 +0200
+
+    Version 0.10
+
+commit f9e1656...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Fri May 30 09:00:53 2008 +0200
+
+    Clarified documentation
+
+commit da76efc...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Thu May 29 22:04:07 2008 +0200
+
+    Fixed 'Rotate', added debugging
+
+commit e240621...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue May 20 19:44:21 2008 +0200
+
+    Fixed documentation formatting
+
+commit fe3823d...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue May 20 18:00:13 2008 +0200
+
+    Added small cgi sample
+
+commit 87fc07f...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue May 20 17:21:57 2008 +0200
+
+    Changed version to 0.9
+
+commit 90f37ce...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue May 20 17:18:40 2008 +0200
+
+    Cleaned up samples and comments
+
+commit 2b50205...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue May 20 17:07:10 2008 +0200
+
+    Added better testing
+
+commit 48262cc...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue May 20 17:03:48 2008 +0200
+
+    Improved documentation
+
+commit 3ed3ded...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue May 20 17:02:30 2008 +0200
+
+    Add error-checking
+
+commit a726f88...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sun Sep 30 19:00:42 2007 +0200
+
+    Re-added pdf-logo files
+
+commit 1490f88...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Sun Sep 30 18:59:04 2007 +0200
+
+    New function: printnl (print multiple lines)
+    Modified: get_page_size (arguments case-independent)
+
+commit e4d7378...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Mon Sep 3 18:05:29 2007 +0200
+
+    Initial import.
