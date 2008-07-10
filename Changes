@@ -1,6 +1,19 @@
-commit 0e9a7ef...
+commit 73d46b5...
 Author: Markus Baertschi <markus@markus.org>
-Date:   Tue Jun 3 12:28:59 2008 +0200
+Date:   Thu Jul 10 17:49:15 2008 +0200
+
+    Fixed gif image processing on big-endian machines.
+    Thanks to Neil Watkiss <neil.watkiss@gmail.com> for the patch !
+
+commit 52789c0...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jun 3 14:47:38 2008 +0200
+
+    Additions to Page.pm by Slaven
+
+commit 886ea2e...
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jun 3 12:43:41 2008 +0200
 
     Renamed Image modules to fix bug 28636 (rt.cpan.org).
 

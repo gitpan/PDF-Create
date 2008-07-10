@@ -25,7 +25,7 @@
 
 package PDF::Create;
 
-our $VERSION = "1.01";
+our $VERSION = "1.02";
 our $DEBUG   = 0;
 
 use strict;

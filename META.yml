@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                PDF-Create
-version:             1.01
+version:             1.02
 abstract:            create PDF files
 license:             ~
 generated_by:        ExtUtils::MakeMaker version 6.36
