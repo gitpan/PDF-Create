@@ -21,7 +21,7 @@ use FileHandle;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 1.02;
+$VERSION = 1.00;
 $DEBUG   = 0;
 
 sub new {

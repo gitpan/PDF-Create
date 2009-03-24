@@ -1,11 +1,12 @@
 # -*- mode: Perl -*-
-#
+
 # PDF::Create::Page - PDF pages tree
 # Author: Fabien Tassin <fta@sofaraway.org>
+# Version: 0.06
 # Copyright 1999-2001 Fabien Tassin <fta@sofaraway.org>
-# Copyright 2007-2008 Markus Baertschi
-# Copyright      2008 Slaven Rezic
 
+# bugs :
+# - ...
 # 31.05.2008  1.00  Markus Baertschi
 # 		    - Changed version to 1.00 to go with PDF::Create
 
@@ -17,11 +18,10 @@ use Exporter;
 use Carp;
 use FileHandle;
 use Data::Dumper;
-use constant PI => 3.141592653;
 
 @ISA     = qw(Exporter);
 @EXPORT  = qw();
-$VERSION = 1.02;
+$VERSION = 1.00;
 $DEBUG   = 0;
 
 my $font_widths = &init_widths;
@@ -311,56 +311,6 @@ sub string_width {
   }
   $w / 1000;
 }
-
-# Additional methods by Slaven
-# set_stroke_color
-# set_fill_color
-# set_line_width
-# circle
-sub set_stroke_color {
-  my($self, $r, $g, $b) = @_;
-  return if (defined $self->{'current_stroke_color'} &&
-             $self->{'current_stroke_color'} eq join(",", $r, $g, $b));
-  $self->{'pdf'}->page_stream($self);
-  $self->{'pdf'}->add("$r $g $b RG");
-  $self->{'current_stroke_color'} = join(",", $r, $g, $b);
-}
-
-sub set_fill_color {
-  my($self, $r, $g, $b) = @_;
-  return if (defined $self->{'current_fill_color'} &&
-             $self->{'current_fill_color'} eq join(",", $r, $g, $b));
-  $self->{'pdf'}->page_stream($self);
-  $self->{'pdf'}->add("$r $g $b rg");
-  $self->{'current_fill_color'} = join(",", $r, $g, $b);
-}
-
-sub set_line_width {
-  my($self, $w) = @_;
-  return if (defined $self->{'current_line_width'} &&
-             $self->{'current_line_width'} == $w);
-  $self->{'pdf'}->page_stream($self);
-  $self->{'pdf'}->add("$w w");
-  $self->{'current_line_width'} = $w;
-}
-
-sub circle {
-  my($self, $x, $y, $r) = @_;
-
-  my @coords;
-  for(my $i = 0; $i < PI*2; $i+=PI*2/$r/2) {
-    my($xi,$yi) = map { $_*$r } (sin $i, cos $i);
-    push @coords, $x+$xi, $y+$yi;
-  }
-  push @coords, @coords[0,1];
-  @coords = map { sprintf "%.2f", $_ } @coords;
-
-  $self->moveto(shift @coords, shift @coords);
-  for(my $i = 0; $i <= $#coords; $i+=2) {
-    $self->lineto($coords[$i], $coords[$i+1]);
-  }
-}
-#
 
 sub printnl {
   my $self = shift;
