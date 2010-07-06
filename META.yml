@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                PDF-Create
-version:             1.05
+version:             1.06
 abstract:            create PDF files
 license:             perl
 author:              ~

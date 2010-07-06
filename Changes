@@ -1,3 +1,75 @@
+commit 61da9f7...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 16:04:19 2010 +0200
+
+    Updated version number
+
+commit e127e19...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 16:04:05 2010 +0200
+
+    Updated Howto
+
+commit 8b24c54...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 16:03:49 2010 +0200
+
+    Fixed Makefile and MANIFEST for Build.PL
+
+commit 41a6ce3...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 16:02:46 2010 +0200
+
+    Added Build.PL
+
+commit d312b0f...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 15:26:13 2010 +0200
+
+    Save locale in Page-image (rt.perl.org bug #57340)
+
+commit 281c452...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 14:20:50 2010 +0200
+
+    Made this test windows-compatible (rt.perl.org bug #55505)
+
+commit 3a95266...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 12:06:58 2010 +0200
+
+    Add prerequisite for perl 5.005 (rt bug #55198)
+
+commit 720a622...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 12:06:00 2010 +0200
+
+    Fix typo
+
+commit 964e35a...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Tue Jul 6 11:04:51 2010 +0200
+
+    File permissions changed
+
+commit 6364179...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Thu Mar 4 13:47:00 2010 +0100
+
+    Fixed POD (rt bug #55184)
+
+commit df8dc6d...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Wed Mar 3 13:21:59 2010 +0100
+
+    Test-script cleanup, proper use of ok() with pdftotext
+
+commit 9aa1e84...   PDF::Create 1.06
+Author: Markus Baertschi <markus@markus.org>
+Date:   Wed Mar 3 12:54:46 2010 +0100
+
+    Run the cgi with the correct perl from $Config{perlpath}.
+
 commit 24af861...   PDF::Create 1.05
 Author: Markus Baertschi <markus@markus.org>
 Date:   Fri Feb 26 00:36:23 2010 +0100
