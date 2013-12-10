@@ -14,18 +14,15 @@
 # 
 
 package PDF::Create::Outline;
-
 use strict;
-use vars qw(@ISA @EXPORT $VERSION $DEBUG);
-use Exporter;
+use warnings;
+
 use Carp;
 use FileHandle;
 use Data::Dumper;
 
-@ISA     = qw(Exporter);
-@EXPORT  = qw();
-$VERSION = 1.05;
-$DEBUG   = 0;
+our $VERSION = 1.07;
+our $DEBUG   = 0;
 
 sub new
 {
@@ -40,7 +37,7 @@ sub new
 sub add
 {
 	my $self    = shift;
-	my $outline = new PDF::Create::Outline();
+	my $outline = PDF::Create::Outline->new();
 	$outline->{'id'}     = shift;
 	$outline->{'name'}   = shift;
 	$outline->{'Parent'} = $self;

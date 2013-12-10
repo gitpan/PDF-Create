@@ -14,19 +14,16 @@
 #
 
 package PDF::Create::Page;
-
 use strict;
-use vars qw(@ISA @EXPORT $VERSION $DEBUG);
-use Exporter;
+use warnings;
+
 use Carp;
 use FileHandle;
 use Data::Dumper;
 use POSIX qw(setlocale LC_NUMERIC);
 
-@ISA     = qw(Exporter);
-@EXPORT  = qw();
-$VERSION = 1.05;
-$DEBUG   = 0;
+our $VERSION = '1.07';
+our $DEBUG   = 0;
 
 my $font_widths = &init_widths;
 
@@ -46,7 +43,7 @@ sub new
 sub add
 {
 	my $self = shift;
-	my $page = new PDF::Create::Page();
+	my $page = PDF::Create::Page->new();
 	$page->{'pdf'}    = $self->{'pdf'};
 	$page->{'Parent'} = $self;
 	$page->{'id'}     = shift;
@@ -419,8 +416,10 @@ sub string_width
 	my $string = shift;
 
 	croak 'No string given' unless defined $string;
-
+    
 	my $fname = $self->{'pdf'}{'fonts'}{$font}{'BaseFont'}[1];
+	croak('Unknown font: ' . $fname) unless defined $$font_widths{$fname}[ ord "M" ];
+	
 	my $w     = 0;
 	for my $c ( split '', $string ) {
 		$w += $$font_widths{$fname}[ ord $c ];

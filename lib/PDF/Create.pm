@@ -12,8 +12,9 @@
 #
 
 package PDF::Create;
-
 use strict;
+use warnings;
+
 use Carp qw(confess croak cluck carp);
 use FileHandle;
 use PDF::Create::Page;
@@ -21,13 +22,7 @@ use PDF::Create::Outline;
 use PDF::Image::GIF;
 use PDF::Image::JPEG;
 
-our ( @ISA, @EXPORT, @EXPORT_OK, @EXPORT_FAIL );
-require Exporter;
-@ISA       = qw(Exporter);
-@EXPORT    = qw();
-@EXPORT_OK = qw($VERSION);
-
-our $VERSION = "1.06";
+our $VERSION = "1.07";
 my $DEBUG = 0;
 
 
@@ -46,7 +41,7 @@ sub new
 	$self->{'version'} = $params{'Version'} || "1.2";
 	$self->{'trailer'} = {};
 
-	$self->{'pages'}          = new PDF::Create::Page();
+	$self->{'pages'}          = PDF::Create::Page->new();
 	$self->{'current_page'}   = $self->{'pages'};
 	$self->{'pages'}->{'pdf'} = $self;                     # circular reference
 	$self->{'page_count'}     = 0;
@@ -61,7 +56,7 @@ sub new
 		$self->{'fh'} = $params{'fh'};
 	} elsif ( defined $params{'filename'} ) {
 		$self->{'filename'} = $params{'filename'};
-		my $fh = new FileHandle "> $self->{'filename'}";
+		my $fh = FileHandle->new( "> $self->{'filename'}" );
 		carp "PDF::Create.pm: $self->{'filename'}: $!\n" unless defined $fh;
 		binmode $fh;
 		$self->{'fh'} = $fh;
@@ -248,12 +243,14 @@ sub encode
 		$val = "$val";
 	  }
 	  || $type eq 'string' && do {
+		$val = '' if not defined $val;
 		$val = "($val)";    # TODO: split it. Quote parentheses.
 	  }
 	  || $type eq 'number' && do {
 		$val = "$val";
 	  }
 	  || $type eq 'name' && do {
+		$val = '' if not defined $val;
 		$val = "/$val";
 	  }
 	  || $type eq 'array' && do {
@@ -529,7 +526,7 @@ sub new_outline
 
 	my %params = @_;
 	unless ( defined $self->{'outlines'} ) {
-		$self->{'outlines'}             = new PDF::Create::Outline();
+		$self->{'outlines'}             = PDF::Create::Outline->new();
 		$self->{'outlines'}->{'pdf'}    = $self;                        # circular reference
 		$self->{'outlines'}->{'Status'} = 'opened';
 	}
@@ -1085,7 +1082,9 @@ PDF::Create - create PDF files
 
 =head1 SYNOPSIS
 
-Create PDF output from your perl program using a couple of subroutines to
+C<PDF::Create> provides an easy module to create PDF output from your
+perl programs. It is designed to be easy to use and simple to install and
+maintain. It provides a couple of subroutines to
 handle text, fonts, images and drawing primitives. Simple documents are
 easy to create with the supplied routines. 
 
@@ -1102,7 +1101,7 @@ Example PDF creation with C<PDF::Create>:
 
   use PDF::Create;
   # initialize PDF
-  my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
+  my $pdf = PDF::Create->new('filename'     => 'mypdf.pdf',
 			                'Author'       => 'John Doe',
 			                'Title'        => 'Sample PDF',
 			                'CreationDate' => [ localtime ], );
@@ -1120,7 +1119,7 @@ Example PDF creation with C<PDF::Create>:
   my $toc = $pdf->new_outline('Title' => 'Title Page', 'Destination' => $page);
 
   # Write some text
-  $page->stringc($f2, 40, 306, 426, "PDF::Create");
+  $page->stringc($f1, 40, 306, 426, "PDF::Create");
   $page->stringc($f1, 20, 306, 396, "version $PDF::Create::VERSION");
   $page->stringc($f1, 20, 306, 300, 'by John Doe <john.doe@example.com>');
 
@@ -1156,7 +1155,7 @@ Create a new pdf structure for your PDF.
 
 Example:
 
-  my $pdf = new PDF::Create('filename'     => 'mypdf.pdf',
+  my $pdf = PDF::Create->new('filename'     => 'mypdf.pdf',
                             'Version'      => 1.2,
                             'PageMode'     => 'UseOutlines',
                             'Author'       => 'John Doe',
@@ -1170,8 +1169,11 @@ C<new> returns an object handle used to add more stuff to the PDF.
 
 =item 'filename'
 
-destination file that will contain the resulting
-PDF or an already opened filehandle or '-' for stdout.
+destination file that will contain the resulting PDF or '-' for stdout. 
+
+=item 'fh'
+
+an already opened filehandle that will contain the resulting PDF.
 
 =item 'Version'
 
@@ -1221,7 +1223,7 @@ CGI Example:
 
   use CGI; use PDF::Create;
   print CGI::header( -type => 'application/x-pdf', -attachment => 'sample.pdf' );
-  my $pdf = new PDF::Create('filename'     => '-', # Stdout
+  my $pdf = PDF::Create->new('filename'     => '-', # Stdout
                             'Author'       => 'John Doe',
                             'Title'        => 'My title',
 			                'CreationDate' => [ localtime ],
@@ -1523,6 +1525,11 @@ Set the width of subsequent lines to C<w> points.
 
 Set the color of the subsequent drawing operations.
 
+Each color ranges from 0.0 to 1.0, that is, darkest red (0.0) to
+brightest red (1.0).  The same holds for green and blue.  These three
+colors mix additively to produce the colors between black (0.0, 0.0,
+0.0) and white (1.0, 1.0, 1.0).
+
 PDF distinguishes between the stroke and fill operations
 and provides separate color settings for each. 
 
@@ -1603,6 +1610,12 @@ Parameters can be:
 - rotate: Rotation of image. 0 is no rotation, 2*pi is 360° rotation.
 
 - xskew, yskew: Skew of image.
+
+Example jpeg image:
+
+  # include a jpeg image with scaling to 20% size
+  my $jpg = $pdf->image("image.jpg");
+  $page->image( 'image' => $jpg, 'xscale' => 0.2, 'yscale' => 0.2, 'xpos' => 350, 'ypos' => 400 );
 
 =back
 

@@ -9,7 +9,8 @@
 
 BEGIN { unshift @INC, "lib", "../lib" }
 use strict;
-use File::Basename;
+use File::Basename qw(dirname);
+use File::Spec;
 use PDF::Create;
 use Test::More tests => 2;
 use Config;
@@ -21,7 +22,7 @@ my $cginame = File::Spec->catfile(dirname($0) . "/09-cgi-script.pl");
 #
 # run the cgi
 #
-ok( !system(qq($cginame | $Config{"perlpath"} -n -e "print if \$. > 2" >$pdfname)), "CGI executes" );
+ok( !system(qq($Config{"perlpath"} $cginame | $Config{"perlpath"} -n -e "print if \$. > 2" >$pdfname)), "CGI executes" );
 
 ################################################################
 #
