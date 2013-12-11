@@ -22,7 +22,7 @@ use PDF::Create::Outline;
 use PDF::Image::GIF;
 use PDF::Image::JPEG;
 
-our $VERSION = "1.07";
+our $VERSION = '1.08';
 my $DEBUG = 0;
 
 
@@ -1075,6 +1075,8 @@ sub get_data
 1;
 
 __END__
+
+=encoding utf8
 
 =head1 NAME
 

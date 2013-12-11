@@ -20,7 +20,7 @@ no_index:
 requires:
   Carp: 0
   Data::Dumper: 0
-  Filehandle: 0
+  FileHandle: 0
 resources:
   repository: http://github.com/szabgab/pdf-create
-version: 1.07
+version: 1.08
