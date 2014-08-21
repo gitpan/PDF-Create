@@ -17,12 +17,13 @@ use warnings;
 
 use Carp qw(confess croak cluck carp);
 use FileHandle;
+use Scalar::Util qw(weaken);
 use PDF::Create::Page;
 use PDF::Create::Outline;
 use PDF::Image::GIF;
 use PDF::Image::JPEG;
 
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 my $DEBUG = 0;
 
 
@@ -44,6 +45,7 @@ sub new
 	$self->{'pages'}          = PDF::Create::Page->new();
 	$self->{'current_page'}   = $self->{'pages'};
 	$self->{'pages'}->{'pdf'} = $self;                     # circular reference
+	weaken $self->{pages}{pdf};
 	$self->{'page_count'}     = 0;
 
 	$self->{'outline_count'} = 0;
@@ -528,6 +530,7 @@ sub new_outline
 	unless ( defined $self->{'outlines'} ) {
 		$self->{'outlines'}             = PDF::Create::Outline->new();
 		$self->{'outlines'}->{'pdf'}    = $self;                        # circular reference
+		weaken $self->{'outlines'}->{'pdf'};
 		$self->{'outlines'}->{'Status'} = 'opened';
 	}
 	my $parent = $params{'Parent'} || $self->{'outlines'};
@@ -1527,6 +1530,8 @@ Set the width of subsequent lines to C<w> points.
 
 Set the color of the subsequent drawing operations.
 
+Valid r, g, and b values are each between 0.0 and 1.0, inclusive.
+
 Each color ranges from 0.0 to 1.0, that is, darkest red (0.0) to
 brightest red (1.0).  The same holds for green and blue.  These three
 colors mix additively to produce the colors between black (0.0, 0.0,
@@ -1679,15 +1684,15 @@ My git repository for C<PDF::Create> L<http://github.com/markusb/pdf-create>
 
 =head2 Other PDF procesing CPAN modules
 
-L<http://search.cpan.org/perldoc?PDF::Labels> Routines to produce formatted pages of mailing labels in PDF, uses PDF::Create internally
+L<PDF::Labels> Routines to produce formatted pages of mailing labels in PDF, uses PDF::Create internally
 
-L<http://search.cpan.org/perldoc?PDF::Haru> Perl interface to Haru Free PDF Library
+L<PDF::Haru> Perl interface to Haru Free PDF Library
 
-L<http://search.cpan.org/perldoc?PDF::EasyPDF> PDF creation from a one-file module, similar to PDF::Create
+L<PDF::EasyPDF> PDF creation from a one-file module, similar to PDF::Create
 
-L<http://search.cpan.org/perldoc?PDF::CreateSimple> Yet another PDF creation module
+L<PDF::CreateSimple> Yet another PDF creation module
 
-L<http://search.cpan.org/perldoc?PDF::Report> A wrapper written for PDF::API2
+L<PDF::Report> A wrapper written for PDF::API2
 
 =head1 AUTHORS
 

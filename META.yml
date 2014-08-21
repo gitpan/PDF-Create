@@ -3,24 +3,27 @@ abstract: 'create PDF files'
 author:
   - unknown
 build_requires:
-  ExtUtils::MakeMaker: 0
+  ExtUtils::MakeMaker: '0'
+  Test::LeakTrace: '0.14'
+  Test::More: '1.00'
 configure_requires:
-  ExtUtils::MakeMaker: 0
+  ExtUtils::MakeMaker: '0'
 dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.78, CPAN::Meta::Converter version 2.132661'
+generated_by: 'ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.140640'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: PDF-Create
 no_index:
   directory:
     - t
     - inc
 requires:
-  Carp: 0
-  Data::Dumper: 0
-  FileHandle: 0
+  Carp: '0'
+  Data::Dumper: '0'
+  FileHandle: '0'
+  Scalar::Util: '0'
 resources:
-  repository: http://github.com/szabgab/pdf-create
-version: 1.08
+  repository: http://github.com/szabgab/pdf-create.git
+version: '1.09'

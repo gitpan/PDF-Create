@@ -21,8 +21,9 @@ use Carp;
 use FileHandle;
 use Data::Dumper;
 use POSIX qw(setlocale LC_NUMERIC);
+use Scalar::Util qw(weaken);
 
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 our $DEBUG   = 0;
 
 my $font_widths = &init_widths;
@@ -45,7 +46,9 @@ sub add
 	my $self = shift;
 	my $page = PDF::Create::Page->new();
 	$page->{'pdf'}    = $self->{'pdf'};
+	weaken $page->{pdf};
 	$page->{'Parent'} = $self;
+	weaken $page->{Parent};
 	$page->{'id'}     = shift;
 	$page->{'name'}   = shift;
 	push @{ $self->{'Kids'} }, $page;

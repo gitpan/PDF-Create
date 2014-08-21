@@ -4,7 +4,7 @@
       "unknown"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.78, CPAN::Meta::Converter version 2.132661",
+   "generated_by" : "ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.140640",
    "license" : [
       "perl_5"
    ],
@@ -34,15 +34,24 @@
          "requires" : {
             "Carp" : "0",
             "Data::Dumper" : "0",
-            "FileHandle" : "0"
+            "FileHandle" : "0",
+            "Scalar::Util" : "0"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Test::LeakTrace" : "0.14",
+            "Test::More" : "1.00"
          }
       }
    },
    "release_status" : "stable",
    "resources" : {
       "repository" : {
-         "url" : "http://github.com/szabgab/pdf-create"
+         "type" : "git",
+         "url" : "http://github.com/szabgab/pdf-create.git",
+         "web" : "http://github.com/szabgab/pdf-create"
       }
    },
-   "version" : "1.08"
+   "version" : "1.09"
 }
