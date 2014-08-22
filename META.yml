@@ -26,4 +26,4 @@ requires:
   Scalar::Util: '0'
 resources:
   repository: http://github.com/szabgab/pdf-create.git
-version: '1.09'
+version: '1.10'
